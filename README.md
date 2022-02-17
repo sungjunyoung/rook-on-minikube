@@ -123,3 +123,37 @@
                 1 undersized+peered
     ```
 
+6. Create replicapool
+    ```bash 
+    > kubectl create -f cephblockpool.yaml
+    cephblockpool.ceph.rook.io/replicapool created
+
+    > kubectl rook-ceph ceph osd pool ls
+    device_health_metrics
+    replicapool
+    ```
+
+7. Create rbd storageclass
+    ```bash
+    > kubectl create -f rbd-sc.yaml
+    storageclass.storage.k8s.io/rbd created
+    ```
+
+8. Test pvc dynamic provisioning, create test pod
+    ```bash 
+    > kubectl create -f rbd-pvc.yaml
+    persistentvolumeclaim/rbd-pvc created
+    > kubectl get pvc 
+    NAME      STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+    rbd-pvc   Bound    pvc-70b4532a-9c17-47c3-a45d-dedf58c2df13   1Gi        RWO            rbd            0s
+
+    > kubectl create -f nginx-with-rbd-pvc.yaml
+    pod/nginx-with-rbd-pvc created
+    # wait until running
+    > kubectl get po 
+    NAME                 READY   STATUS    RESTARTS   AGE
+    nginx-with-rbd-pvc   1/1     Running   0          3m7s
+    
+    > kubectl exec -it nginx-with-rbd-pvc -- df -h | grep rbd
+    /dev/rbd0               975.9M      2.5M    957.4M   0% /data
+    ```
